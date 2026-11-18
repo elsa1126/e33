@@ -858,6 +858,12 @@ select { max-width: 150px; background: var(--hi); color: var(--text); border: 0;
     const out = serialize(save);
     try { parse(out); } catch (e) { return toast('檢查失敗，沒有下載：' + e.message); }
     const name = fileName || 'EXPEDITION_0.sav';
+    // 電腦軟體版：由外殼提供 E33_SAVE（跳出另存新檔），回傳 false 代表使用者取消
+    if (window.E33_SAVE) {
+      try { if (!(await window.E33_SAVE(name, out))) return toast('已取消儲存'); }
+      catch (e) { return toast('儲存失敗：' + (e.message || e)); }
+      dirty = false; status(); return toast('已儲存');
+    }
     const dl = window.claude && window.claude.use ? await window.claude.use('downloads').catch(() => null) : null;
     if (dl) {
       try { await dl.save({ filename: name.replace(/\.sav$/i, '') + '.zip', data: new Blob([zipOne(name, out)]) }); }
@@ -893,7 +899,14 @@ select { max-width: 150px; background: var(--hi); color: var(--text); border: 0;
     } catch (e) { save = null; isSample = false; }
     render();
   });
-  window.E33_APP = { get save() { return save; }, openBytes: (u8, name) => { save = parse(u8); fileName = name; origBytes = u8; dirty = false; render(); }, serialize: () => serialize(save), TABS, render, setTab: (t) => { tab = t; render(); } };
+  // 給電腦軟體版的存檔清單用：讀出遊戲時數與讀檔地點，不影響目前開著的存檔
+  function summary(u8) {
+    const s = parse(u8); const f = (n) => s.props.find((p) => is(p, n));
+    const tp = f('TimePlayed'), mp = f('MapToLoad');
+    const map = mp && mp.value ? nm(mp.value).replace(/^Level_/, '') : '';
+    return { hours: tp ? tp.value / 3600 : null, place: map ? (levelZh(map) || map) : '', ngp: (f('FinishedGameCount') || {}).value || 0 };
+  }
+  window.E33_APP = { get save() { return save; }, summary, get dirty() { return dirty; }, openBytes: (u8, name) => { save = parse(u8); fileName = name; origBytes = u8; dirty = false; isSample = false; render(); toast(`已開啟 ${name}`); }, serialize: () => serialize(save), TABS, render, setTab: (t) => { tab = t; render(); } };
 })();
 </script>
 </body>

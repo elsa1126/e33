@@ -12,6 +12,19 @@ Windows 存檔位置：`%LOCALAPPDATA%\Sandfall\Saved\SaveGames\<編號>\`
 
 存檔只在你的瀏覽器裡處理，不會上傳到任何地方。整個編輯器是單一 `index.html`，下載後離線也能用。
 
+## 電腦軟體版（Windows／Mac）
+
+到 [Releases](https://github.com/elsa1126/e33/releases) 下載：Windows 選 `.exe`，Mac 選 `.dmg`（Intel 與 Apple 晶片都能用）。
+
+軟體版和網頁版介面相同，多了「遊戲存檔清單」：一打開就列出 `EXPEDITION_0～4`、遊戲時數與讀檔地點，點一下就載入；按「下載存檔」會跳出另存新檔，預設存回原本的位置。找不到存檔時可以按「選擇資料夾」指定 SaveGames 資料夾。
+
+安裝檔沒有付費簽章，第一次開啟會被系統攔下：
+
+- Windows：出現「Windows 已保護您的電腦」時，按「其他資訊」→「仍要執行」。
+- Mac：把 App 拖進「應用程式」後，對它按右鍵 →「打開」→ 再按「打開」。如果顯示「已損毀」，在終端機執行 `xattr -cr "/Applications/E33 Save Editor.app"` 後再開。
+
+原始碼在 `app/`（Tauri 2），由 `.github/workflows/desktop.yml` 在 GitHub Actions 上 build。
+
 ## 分頁
 
 外觀、武器、符文、角色、技能、唱片、日誌、能力、友善敵人、其他、好感、敵人、任務、GUID、轉檔（1.5 版存檔轉成舊版）。

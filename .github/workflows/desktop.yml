@@ -1,0 +1,63 @@
+# 電腦軟體版：在 GitHub 雲端 build Windows（.exe 安裝檔）與 Mac（.dmg，Intel＋Apple 晶片通用）
+# 觸發方式：推一個 v 開頭的 tag（例如 v0.1.0），或在 Actions 頁面手動執行
+name: desktop
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            args: ''
+            targets: ''
+          - platform: macos-latest
+            args: '--target universal-apple-darwin'
+            targets: 'aarch64-apple-darwin,x86_64-apple-darwin'
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.targets }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './app/src-tauri -> target'
+
+      - name: 準備介面與圖示
+        working-directory: app
+        shell: bash
+        run: |
+          npm install
+          mkdir -p dist
+          cp ../index.html dist/index.html
+          cp desktop.js dist/desktop.js
+          node -e "const fs=require('fs');const f='dist/index.html';fs.writeFileSync(f,fs.readFileSync(f,'utf8').replace('</body>','<script src=\"desktop.js\"></script>\n</body>'))"
+          npx tauri icon app-icon.png
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: app
+          tauriScript: npx tauri
+          tagName: v__VERSION__
+          releaseName: 'E33 存檔編輯 v__VERSION__'
+          releaseBody: '下載 Windows 版選 .exe，Mac 版選 .dmg。第一次開啟的說明見 README。'
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
